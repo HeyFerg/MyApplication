@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Camera;
 import android.location.Location;
+import java.util.ArrayList;
 
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,10 +16,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -30,21 +34,26 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
+    ArrayList<LatLng> mapMarkers;
     private GoogleMap mMap;
     private GoogleApiClient client;
     private LocationRequest locationRequest;
     private Marker currentPosition;
     public static final int REQUEST_LOCATION_CODE = 99;
+    private FusedLocationProviderClient locationClient;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        locationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        mapMarkers = new ArrayList<LatLng>();
         if(Build.VERSION.SDK_INT >- Build.VERSION_CODES.M)
         {
             checkLocationPermissions();
@@ -91,12 +100,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                 @Override
-                public void onMapClick(LatLng latLng) {
+                public void onMapClick(LatLng marker) {
+
+                    if(mapMarkers.size() > 1)
+                    {
+                        mapMarkers.clear();
+                        mMap.clear();
+                    }
+
+                    mapMarkers.add(marker);
                     MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.position(latLng);
-                    googleMap.clear();
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-                    googleMap.addMarker(markerOptions);
+                    markerOptions.position(marker);
+
+                    if(mapMarkers.size() == 1)
+                    {
+                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                    }
+                    else if(mapMarkers.size() == 2)
+                    {
+                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                    }
+
+                    mMap.addMarker(markerOptions);
+
+                    if(mapMarkers.size() >= 2)
+                    {
+                        LatLng userOrigin = mapMarkers.get(0);
+                        LatLng userDestination = mapMarkers.get(1);
+
+                        String url = getUrl(userOrigin, userDestination);
+                        Log.d("onMapClick", url.toString());
+                        FetchURL obtainURL = new FetchURL;
+                    }
+
+
+
                 }
             });
     }
@@ -112,16 +150,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        locationRequest = new LocationRequest();
 
-        locationRequest.setInterval(1000);
-        locationRequest.setInterval(1000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-        {
-            LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, this);
-        }
     }
 
     @Override
@@ -133,26 +162,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
 
-        if(currentPosition != null)
-        {
-            currentPosition.remove();
-        }
 
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title("Your current position");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-
-        currentPosition = mMap.addMarker(markerOptions);
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));
-
-        if(client != null)
-        {
-            LocationServices.FusedLocationApi.removeLocationUpdates(client, (com.google.android.gms.location.LocationListener) this);
-        }
     }
 
 
@@ -182,5 +192,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 }
+
 
 
