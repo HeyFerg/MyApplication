@@ -6,6 +6,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Camera;
 import android.location.Location;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 import android.os.AsyncTask;
@@ -192,8 +199,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public String downloadURL(String strUrl) throws Exception{
-        String
+    public String downloadJSON(String URL) throws IOException{
+        String data = "";
+        InputStream blah = null;
+        HttpURLConnection conn = null;
+        try{
+            java.net.URL url = new URL(URL);
+
+            conn = (HttpURLConnection) url.openConnection();
+
+            conn.connect();
+
+            blah = conn.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(blah));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while((line = br.readLine()) != null){
+                sb.append(line);
+            }
+            data = sb.toString();
+            Log.d("downloadJSON", data.toString());
+        } catch (Exception e) {
+            Log.d("Exception", e.toString());
+        }finally{
+            blah.close();
+            conn.disconnect();
+        }
+        return data;
     }
 }
 
