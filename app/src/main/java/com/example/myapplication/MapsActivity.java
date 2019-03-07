@@ -191,6 +191,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
+    public String downloadURL(String strUrl) throws Exception{
+        String
+    }
 }
 
 
