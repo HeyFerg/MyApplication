@@ -1,10 +1,8 @@
 package com.example.myapplication;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Camera;
+import android.graphics.Color;
 import android.location.Location;
 
 import java.io.BufferedReader;
@@ -14,6 +12,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import android.os.AsyncTask;
 import android.os.Build;
@@ -23,7 +23,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -32,7 +31,6 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -40,6 +38,10 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -54,6 +56,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker currentPosition;
     public static final int REQUEST_LOCATION_CODE = 99;
     private FusedLocationProviderClient locationClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,8 +64,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         mapMarkers = new ArrayList<LatLng>();
-        if(Build.VERSION.SDK_INT >- Build.VERSION_CODES.M)
-        {
+        if (Build.VERSION.SDK_INT > -Build.VERSION_CODES.M) {
             checkLocationPermissions();
         }
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -72,22 +74,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch(requestCode)
-        {
+        switch (requestCode) {
             case REQUEST_LOCATION_CODE:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-                    if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-                    {
-                        if(client == null)
-                        {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        if (client == null) {
                             buildGoogleApiClient();
                         }
                         mMap.setMyLocationEnabled(true);
                     }
-                }
-                else
-                {
+                } else {
                     Toast.makeText(this, "Permission has been denied", Toast.LENGTH_LONG).show();
                 }
 
@@ -98,57 +94,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-            {
-                buildGoogleApiClient();
-                mMap.setMyLocationEnabled(true);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            buildGoogleApiClient();
+            mMap.setMyLocationEnabled(true);
+
+        }
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng marker) {
+
+                if (mapMarkers.size() > 1) {
+                    mapMarkers.clear();
+                    mMap.clear();
+                }
+
+                mapMarkers.add(marker);
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(marker);
+
+                if (mapMarkers.size() == 1) {
+                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                } else if (mapMarkers.size() == 2) {
+                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                }
+
+                mMap.addMarker(markerOptions);
+
+                 if(mapMarkers.size() == 2){
+                     String url = retrieveURL(mapMarkers.get(0), mapMarkers.get(1));
+                     retrieveDirections retrieveDirections = new retrieveDirections();
+                     retrieveDirections.execute(url);
+                 }
 
             }
+        });
+    }
 
-            mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-                @Override
-                public void onMapClick(LatLng marker) {
+    private String retrieveURL (LatLng userOrigin, LatLng userDestination){
 
-                    if(mapMarkers.size() > 1)
-                    {
-                        mapMarkers.clear();
-                        mMap.clear();
-                    }
+        String str_origin = "origin=" + userOrigin.latitude + "," + userOrigin.longitude;
 
-                    mapMarkers.add(marker);
-                    MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.position(marker);
+        String str_destination = "destination=" + userDestination.latitude + "," + userDestination.longitude;
 
-                    if(mapMarkers.size() == 1)
-                    {
-                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-                    }
-                    else if(mapMarkers.size() == 2)
-                    {
-                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-                    }
+        String sensor = "sensor=false";
 
-                    mMap.addMarker(markerOptions);
+        String mode = "mode=walking";
 
-                    if(mapMarkers.size() >= 2)
-                    {
-                        LatLng userOrigin = mapMarkers.get(0);
-                        LatLng userDestination = mapMarkers.get(1);
+        String parameters = str_origin + "&" + str_destination + "&" + sensor + "&" + mode;
 
-                        String url = getUrl(userOrigin, userDestination);
-                        Log.d("onMapClick", url.toString());
-                        FetchURL obtainURL = new FetchURL;
-                    }
+        String output = "json";
 
+        String url = "https://maps.googleapis.com/maps/api/directions" + output + "?" + parameters;
 
-
-                }
-            });
+        return url;
     }
 
 
 
-    protected synchronized void buildGoogleApiClient(){
+    protected synchronized void buildGoogleApiClient() {
 
         client = new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
 
@@ -173,22 +177,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    public boolean checkLocationPermissions() {
 
-    public boolean checkLocationPermissions(){
-
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
-            if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION))
-            {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_CODE);
-            }
-            else
-            {
+            } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_CODE);
             }
             return false;
-        }
-        else
+        } else
             return true;
 
 
@@ -199,38 +197,120 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public String downloadJSON(String URL) throws IOException{
-        String data = "";
-        InputStream blah = null;
+    private String DirectionsRequest(String getURL) throws IOException{
+
+        String response  = "";
+        InputStream inputStream = null;
         HttpURLConnection conn = null;
+
         try{
-            java.net.URL url = new URL(URL);
-
+            URL url = new URL(getURL);
             conn = (HttpURLConnection) url.openConnection();
-
             conn.connect();
 
-            blah = conn.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(blah));
+            inputStream = conn.getInputStream();
+            InputStreamReader in  = new InputStreamReader(inputStream);
+            BufferedReader br = new BufferedReader(in);
 
             StringBuffer sb = new StringBuffer();
-
             String line = "";
-            while((line = br.readLine()) != null){
+            while((line = br.readLine()) != null)
+            {
                 sb.append(line);
             }
-            data = sb.toString();
-            Log.d("downloadJSON", data.toString());
-        } catch (Exception e) {
-            Log.d("Exception", e.toString());
-        }finally{
-            blah.close();
+
+            response = sb.toString();
+            br.close();
+            in.close();
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally{
+            if(inputStream != null)
+            {
+                inputStream.close();
+            }
+            assert conn != null;
             conn.disconnect();
         }
-        return data;
+        return response;
     }
+
+    private class retrieveDirections extends AsyncTask<String, Void, String> {
+
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String response = "";
+            try{
+                response = DirectionsRequest(strings[0]);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(String s){
+            super.onPostExecute(s);
+            ParserTask parserTask = new ParserTask();
+            parserTask.execute(s);
+        }
+    }
+
+
+    public class ParserTask extends AsyncTask<String, Void, List<List<HashMap<String, String>>> >{
+
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... strings){
+
+            JSONObject jsonObject;
+            List<List<HashMap<String, String>>> routes = null;
+            try{
+                jsonObject = new JSONObject(strings[0]);
+                DataParser dataParser = new DataParser();
+                routes = dataParser.parse(jsonObject);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        protected void onPostExecute(List<List<HashMap<String, String>>> lists){
+
+            ArrayList points;
+
+            PolylineOptions polylineOptions = null;
+
+            for(List<HashMap<String, String>> path: lists){
+                points = new ArrayList();
+                polylineOptions = new PolylineOptions();
+
+                for(HashMap<String, String> point : path){
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lon = Double.parseDouble(point.get("lon"));
+
+                    points.add(new LatLng(lat, lon));
+                }
+
+                polylineOptions.addAll(points);
+                polylineOptions.width(15);
+                polylineOptions.color(Color.BLUE);
+                polylineOptions.geodesic(true);
+
+            }
+
+            if(polylineOptions != null){
+                mMap.addPolyline(polylineOptions);
+            } else{
+                Toast.makeText(getApplicationContext(), "Directions not found.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
 }
+
+
 
 
 
