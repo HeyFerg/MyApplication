@@ -15,7 +15,7 @@ public class DataParser {
     /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
     public List<List<HashMap<String,String>>> parse(JSONObject jObject){
 
-        List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
+       List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
         JSONArray jRoutes;
         JSONArray jLegs;
         JSONArray jSteps;
@@ -44,9 +44,11 @@ public class DataParser {
                             HashMap<String, String> hm = new HashMap<>();
                             hm.put("lat", Double.toString((list.get(l)).latitude) );
                             hm.put("lng", Double.toString((list.get(l)).longitude) );
+                            // The line below is throwing the "Unchecked call to 'add(E)' as a member of raw type 'java.util.List' warning"
                             path.add(hm);
                         }
                     }
+                    //The line below is throwing the "Unchecked assignment: 'java.util.List' to 'java.util.List<java.util.HashMap<java.lang.String,java.lang.String>>'" warning
                     routes.add(path);
                 }
             }

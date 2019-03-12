@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -23,6 +24,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -56,6 +58,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker currentPosition;
     public static final int REQUEST_LOCATION_CODE = 99;
     private FusedLocationProviderClient locationClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,11 +124,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 mMap.addMarker(markerOptions);
 
-                 if(mapMarkers.size() == 2){
-                     String url = retrieveURL(mapMarkers.get(0), mapMarkers.get(1));
-                     retrieveDirections retrieveDirections = new retrieveDirections();
-                     retrieveDirections.execute(url);
-                 }
+                if(mapMarkers.size() == 2){
+                    String url = retrieveURL(mapMarkers.get(0), mapMarkers.get(1));
+                    retrieveDirections retrieveDirections = new retrieveDirections();
+                    Log.d("gmaps", "Exectuing retrieveDirections with url:" + url);
+                    retrieveDirections.execute(url);
+                }
 
             }
         });
@@ -145,8 +149,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         String output = "json";
 
-        String url = "https://maps.googleapis.com/maps/api/directions" + output + "?" + parameters;
-
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output+ "?" + parameters + "&key=AIzaSyCxrlZQCSiN2bNOi7Dv8YsyBCWaR5fh2iA";
+        // String url = "https://www.google.com/maps/dir/?api=1&" + parameters;
+        // https://maps.googleapis.com/maps/api/directions
         return url;
     }
 
@@ -212,7 +217,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             InputStreamReader in  = new InputStreamReader(inputStream);
             BufferedReader br = new BufferedReader(in);
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String line = "";
             while((line = br.readLine()) != null)
             {
@@ -243,6 +248,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             String response = "";
             try{
                 response = DirectionsRequest(strings[0]);
+                Log.d("gmaps", "Directions is: " + strings[0]);
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -251,13 +257,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPostExecute(String s){
+            Log.d("gmaps", "returned from retrieveDirections: " + s);
             super.onPostExecute(s);
             ParserTask parserTask = new ParserTask();
             parserTask.execute(s);
         }
     }
 
-
+    // Below is line 267, where I have created the ParserTask where one of the errors is highlighted in the log.
+    @SuppressLint("StaticFieldLeak")
     public class ParserTask extends AsyncTask<String, Void, List<List<HashMap<String, String>>> >{
 
         @Override
@@ -266,10 +274,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             JSONObject jsonObject;
             List<List<HashMap<String, String>>> routes = null;
             try{
+                Log.d("gmaps", "Strings[0] is: " + strings[0]);
                 jsonObject = new JSONObject(strings[0]);
                 DataParser dataParser = new DataParser();
                 routes = dataParser.parse(jsonObject);
+                Log.d("gmaps", "is routes null? " + routes);
             } catch (JSONException e) {
+                Log.d("gmaps", "JSONException");
                 e.printStackTrace();
             }
             return routes;
@@ -284,7 +295,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             for(List<HashMap<String, String>> path: lists){
                 points = new ArrayList();
                 polylineOptions = new PolylineOptions();
-
+                // Line 299, double lon = Double.parseDouble(point.get("lon")); is the line that is also throwing an error. 
                 for(HashMap<String, String> point : path){
                     double lat = Double.parseDouble(point.get("lat"));
                     double lon = Double.parseDouble(point.get("lon"));
@@ -306,7 +317,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
     }
-
 
 }
 
