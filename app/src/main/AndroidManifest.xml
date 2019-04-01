@@ -43,6 +43,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".StepCounterActivity"
+            android:label="Step Counter"></activity>
+        <activity android:name=".LogbookActivity"
+            android:label="Logbook"></activity>
+
     </application>
 
 </manifest>
