@@ -225,7 +225,7 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-
+//
     }
 }
 
