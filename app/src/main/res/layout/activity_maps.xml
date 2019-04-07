@@ -1,9 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapsActivity" />
+    android:orientation="vertical"
+    android:weightSum="1"
+    android:id="@+id/root">
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="310dp"
+        android:layout_weight="0.5"
+        tools:context="com.example.burhan.googlemapsdemoapp.MapsActivity" />
+
+    <Button
+        android:id="@+id/startBtn"
+        android:layout_width="110dp"
+        android:layout_height="61dp"
+        android:text="Start" />
+
+    <Button
+        android:id="@+id/stopBtn"
+        android:layout_width="109dp"
+        android:layout_height="61dp"
+        android:text="Stop" />
+
+    <TextView
+        android:id="@+id/step_taken"
+        android:layout_width="match_parent"
+        android:layout_height="150dp" />
+
+    </LinearLayout>
+
+

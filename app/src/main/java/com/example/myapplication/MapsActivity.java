@@ -1,9 +1,14 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 
 
@@ -20,6 +25,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -43,15 +51,16 @@ import com.google.android.gms.maps.model.PolylineOptions;
 public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener, SensorEventListener{
 
     ArrayList<LatLng> mapMarkers;
     private GoogleMap mMap;
     private GoogleApiClient client;
-    private LocationRequest locationRequest;
-    private Marker currentPosition;
     public static final int REQUEST_LOCATION_CODE = 99;
     private FusedLocationProviderClient locationClient;
+    android.hardware.SensorManager SensorManager;
+    boolean isRunning = false;
+
 
 
     @Override
@@ -59,6 +68,7 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         locationClient = LocationServices.getFusedLocationProviderClient(this);
+        SensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
         mapMarkers = new ArrayList<LatLng>();
         if (Build.VERSION.SDK_INT > -Build.VERSION_CODES.M) {
@@ -67,6 +77,23 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isRunning = true;
+        Sensor StepSensor = SensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        if(StepSensor != null){
+            SensorManager.registerListener(this, StepSensor, android.hardware.SensorManager.SENSOR_DELAY_UI);
+        } else{
+            Toast.makeText(this, "No sensor has been found", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    protected void onPause(){
+        super.onPause();
+        isRunning = false;
     }
 
     @Override
@@ -119,14 +146,14 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                     markerOptions.title("Waypoint 1");
                 } else if (mapMarkers.size() == 2) {
-                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE ));
+                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                     markerOptions.title("Waypoint 2");
                     mMap.addPolyline(polylineOptions);
-                } else if (mapMarkers.size() == 3){
+                } else if (mapMarkers.size() == 3) {
                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                     markerOptions.title("Waypoint 3");
                     mMap.addPolyline(polylineOptions);
-                } else if (mapMarkers.size() == 4){
+                } else if (mapMarkers.size() == 4) {
                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                     markerOptions.title("Waypoint 4");
                     mMap.addPolyline(polylineOptions);
@@ -137,8 +164,6 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
             }
         });
     }
-
-
 
 
     protected synchronized void buildGoogleApiClient() {
@@ -187,29 +212,24 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
     }
 
 
-    public boolean onCreateOptionsMenu(Menu menu){
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
-        return true;
+
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        TextView steps = (TextView) findViewById(R.id.step_taken);
+
+        if(isRunning){
+            steps.setText(String.valueOf(sensorEvent.values[0]));
+        }
     }
 
-    public boolean onOptionsItemsSelected(MenuItem item) {
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
 
-        if (item.getItemId() == R.id.stepcounter)
-        {
-            Intent intent = new Intent(this, StepCounterActivity.class);
-            startActivityForResult(intent, 0);
-            return true;
-        }
-        if (item.getItemId() == R.id.logbook)
-        {
-            Intent intent = new Intent(this, LogbookActivity.class);
-            startActivityForResult(intent, 0);
-            return true;
-        }
-        return false;
     }
 }
+
+
 
 
 
