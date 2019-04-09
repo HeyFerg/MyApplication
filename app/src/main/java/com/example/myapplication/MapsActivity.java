@@ -70,6 +70,23 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
         locationClient = LocationServices.getFusedLocationProviderClient(this);
         SensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
+         final Button stopBtn = (Button) findViewById(R.id.stopBtn);
+        stopBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                stopSteps();
+
+            }
+        });
+        final Button startBtn = (Button) findViewById(R.id.startBtn);
+        startBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startSteps();
+            }
+        });
+
+
         mapMarkers = new ArrayList<LatLng>();
         if (Build.VERSION.SDK_INT > -Build.VERSION_CODES.M) {
             checkLocationPermissions();
@@ -78,6 +95,9 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+
+
+
 
     @Override
     protected void onResume() {
@@ -227,6 +247,18 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
     public void onAccuracyChanged(Sensor sensor, int i) {
 //
     }
+
+    public void stopSteps(){
+        SensorManager.unregisterListener(this);
+        Toast.makeText(this, "Step counter has been deactivated", Toast.LENGTH_SHORT).show();
+    }
+
+    public void startSteps(){
+        Sensor StepSensor = SensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        SensorManager.registerListener(this, StepSensor, android.hardware.SensorManager.SENSOR_DELAY_UI);
+        Toast.makeText(this, "Step counter has been activated", Toast.LENGTH_SHORT).show();
+    }
+
 }
 
 
