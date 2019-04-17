@@ -51,7 +51,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener, SensorEventListener{
+        LocationListener, SensorEventListener {
 
     ArrayList<LatLng> mapMarkers;
     private GoogleMap mMap;
@@ -62,7 +62,6 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
     boolean isRunning = false;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,7 +69,7 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
         locationClient = LocationServices.getFusedLocationProviderClient(this);
         SensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-         final Button stopBtn = (Button) findViewById(R.id.stopBtn);
+        final Button stopBtn = (Button) findViewById(R.id.stopBtn);
         stopBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -97,21 +96,19 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
     }
 
 
-
-
     @Override
     protected void onResume() {
         super.onResume();
         isRunning = true;
         Sensor StepSensor = SensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        if(StepSensor != null){
+        if (StepSensor != null) {
             SensorManager.registerListener(this, StepSensor, android.hardware.SensorManager.SENSOR_DELAY_UI);
-        } else{
+        } else {
             Toast.makeText(this, "No sensor has been found", Toast.LENGTH_SHORT).show();
         }
     }
 
-    protected void onPause(){
+    protected void onPause() {
         super.onPause();
         isRunning = false;
     }
@@ -232,13 +229,11 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
     }
 
 
-
-
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         TextView steps = (TextView) findViewById(R.id.step_taken);
 
-        if(isRunning){
+        if (isRunning) {
             steps.setText(String.valueOf(sensorEvent.values[0]));
         }
     }
@@ -248,17 +243,32 @@ public class MapsActivity extends AppCompatActivity  implements OnMapReadyCallba
 //
     }
 
-    public void stopSteps(){
+    public void stopSteps() {
         SensorManager.unregisterListener(this);
         Toast.makeText(this, "Step counter has been deactivated", Toast.LENGTH_SHORT).show();
     }
 
-    public void startSteps(){
+    public void startSteps() {
         Sensor StepSensor = SensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         SensorManager.registerListener(this, StepSensor, android.hardware.SensorManager.SENSOR_DELAY_UI);
         Toast.makeText(this, "Step counter has been activated", Toast.LENGTH_SHORT).show();
     }
 
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.logbook) {
+            Intent intent = new Intent(this, LogbookActivity.class);
+            startActivityForResult(intent, 0);
+            return true;
+        }
+        return true;
+    }
 }
 
 
