@@ -14,7 +14,7 @@ class MyHelper(ctx: Context) : SQLiteOpenHelper(ctx, "Exercise", null, 1){
 
     override fun onCreate(db: SQLiteDatabase) {
 
-        db.execSQL("CREATE TABLE IF NOT EXISTS Steps (Id INT PRIMARY KEY, Day VARCHAR, Steps LONG)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS Steps (ID INT PRIMARY KEY, Day VARCHAR, Steps LONG)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion:Int, newVersion:Int) {
@@ -33,20 +33,20 @@ class MyHelper(ctx: Context) : SQLiteOpenHelper(ctx, "Exercise", null, 1){
     }
 
 
-    fun searchSteps(Day: String) : Steps? {
+    fun searchSteps(Day: String) : List<Steps> {
 
         val db = readableDatabase
         val cursor = db.rawQuery ("SELECT * FROM Steps WHERE Day=? AND Steps=?", arrayOf<String>("$Day"))
-
+        val st = mutableListOf<Steps>()
         if(cursor.moveToFirst()){
 
-            val s = Steps(cursor.getString(cursor.getColumnIndex("ID:")),
-                    cursor.getString(cursor.getColumnIndex("Day:")), cursor.getLong(cursor.getColumnIndex("Steps:")))
+            val s = Steps(cursor.getString(cursor.getColumnIndex("ID")),
+                    cursor.getString(cursor.getColumnIndex("Day")), cursor.getLong(cursor.getColumnIndex("Steps")))
             cursor.close()
-            return s
+            st.add(s)
         }
         cursor.close()
-        return null
+        return st
     }
 
     fun updateRecord(id: String, Day: String, Steps: Long): Int{

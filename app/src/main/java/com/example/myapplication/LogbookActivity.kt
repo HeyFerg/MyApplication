@@ -32,7 +32,9 @@ class LogbookActivity : AppCompatActivity() {
         searchBtn.setOnClickListener{
             val day = etDay.text.toString()
 
-            helper.searchSteps(day)
+            var b = helper.searchSteps(day)[0].steps
+
+           etSteps.setText(b.toString())
         }
     }
 }
