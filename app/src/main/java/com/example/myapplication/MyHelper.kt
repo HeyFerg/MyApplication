@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper
 
 data class Song(val id: String, val t: String, val a: String, val y: Long)
 
-data class Steps(val id: String, val day: String, val steps: Long)
+data class Steps(val Day: String, val Steps: Long)
 
 class MyHelper(ctx: Context) : SQLiteOpenHelper(ctx, "Exercise", null, 1){
 
@@ -36,38 +36,17 @@ class MyHelper(ctx: Context) : SQLiteOpenHelper(ctx, "Exercise", null, 1){
     fun searchSteps(Day: String) : List<Steps> {
 
         val db = readableDatabase
-        val cursor = db.rawQuery ("SELECT * FROM Steps WHERE Day=? AND Steps=?", arrayOf<String>("$Day"))
+        val cursor = db.rawQuery ("SELECT * FROM Steps WHERE Day=?", arrayOf<String>(Day))
         val st = mutableListOf<Steps>()
         if(cursor.moveToFirst()){
 
-            val s = Steps(cursor.getString(cursor.getColumnIndex("ID")),
-                    cursor.getString(cursor.getColumnIndex("Day")), cursor.getLong(cursor.getColumnIndex("Steps")))
+            val s = Steps(cursor.getString(cursor.getColumnIndexOrThrow("Day")), cursor.getLong(cursor.getColumnIndexOrThrow("Steps")))
             cursor.close()
             st.add(s)
         }
         cursor.close()
+
         return st
     }
 
-    fun updateRecord(id: String, Day: String, Steps: Long): Int{
-
-        val db = writableDatabase
-        val stmt = db.compileStatement("UPDATE Steps SET Day=?, Steps=?")
-        stmt.bindString(1, Day)
-        stmt.bindLong(2, Steps)
-        val nAffectedRows = stmt.executeUpdateDelete()
-        return nAffectedRows
-    }
-
-    fun deleteRecord(Day: String, Steps: Long): Int{
-
-        val db = writableDatabase
-        val stmt = db.compileStatement("DELETE FROM Steps WHERE Day=? AND Steps=?")
-        stmt.bindString(1, Day)
-        stmt.bindLong(2, Steps)
-
-        val nAffectedRows = stmt.executeUpdateDelete()
-        return nAffectedRows
-
-    }
 }
