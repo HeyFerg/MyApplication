@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Fit4Free</string>
     <string name="title_activity_maps">Map</string>
     <string name="stepcounter">Step Counter</string>
     <string name="logbook">Logbook</string>
